@@ -13,32 +13,24 @@ import {
 
 const DEFAULT_SETTINGS: ListCalloutsSettings = [
   {
-    color: '255, 214, 0',
-    tag: 'important',
+    color: '255, 23, 68',
+    tag: '!',
   },
   {
     color: '255, 145, 0',
-    tag: 'question',
-  },
-  {
-    color: '255, 23, 68',
-    tag: 'urgent',
-  },
-  {
-    color: '124, 77, 255',
-    tag: 'note',
-  },
-  {
-    color: '0, 184, 212',
-    tag: 'info',
+    tag: '?',
   },
   {
     color: '0, 200, 83',
-    tag: 'success',
+    tag: '$',
   },
   {
-    color: '158, 158, 158',
-    tag: 'todo',
+    color: '124, 77, 255',
+    tag: '~',
+  },
+  {
+    color: '0, 184, 212',
+    tag: 'note',
   },
 ];
 

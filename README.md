@@ -21,23 +21,22 @@ The tags can also be replaced with icons:
 
 ## Default tags
 
-The plugin comes with 7 predefined tags:
-- `#important` - Yellow
-- `#question` - Orange  
-- `#urgent` - Red
-- `#note` - Purple
-- `#info` - Cyan
-- `#success` - Green
-- `#todo` - Gray
+The plugin comes with 5 predefined tags:
+- `#!` - Red
+- `#?` - Orange  
+- `#$` - Green
+- `#~` - Purple
+- `#note` - Blue
 
 ## Example usage
 
 ```markdown
 - This is a regular list item
-- This item contains #important information
-- #urgent Need to review this immediately
-- Check the documentation for #info about API changes
-- #todo Add tests for new feature
+- This item contains #! critical information
+- #? Need to clarify this point
+- Budget approved - #$ 50,000 allocated
+- #~ This might be controversial
+- #note Remember to update documentation
 ```
 
 ## Customization
