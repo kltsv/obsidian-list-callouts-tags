@@ -1,10 +1,10 @@
 {
-	"id": "obsidian-list-callouts",
-	"name": "List Callouts",
-	"version": "1.2.9",
+	"id": "obsidian-list-callouts-tags",
+	"name": "List Callouts Tags",
+	"version": "1.0.0",
 	"minAppVersion": "1.1.1",
-	"description": "Create simple callouts in lists.",
-	"author": "mgmeyers",
+	"description": "Create simple callouts in lists based on tags (modified version).",
+	"author": "ringov (based on mgmeyers original)",
 	"authorUrl": "https://github.com/mgmeyers/obsidian-list-callouts",
 	"isDesktopOnly": false
 }

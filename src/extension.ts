@@ -34,20 +34,20 @@ export class CalloutBackground extends WidgetType {
 }
 
 export class CalloutMarker extends WidgetType {
-  char: string;
+  tag: string;
   icon?: string;
 
-  constructor(char: string, icon?: string) {
+  constructor(tag: string, icon?: string) {
     super();
 
-    this.char = char;
+    this.tag = tag;
     this.icon = icon;
   }
 
   toDOM() {
     return createSpan(
       {
-        text: this.char,
+        text: `#${this.tag}`,
         cls: 'lc-list-marker',
         attr: {
           'aria-hidden': 'true',
@@ -62,16 +62,16 @@ export class CalloutMarker extends WidgetType {
   }
 
   eq(widget: CalloutMarker): boolean {
-    return widget.char === this.char && widget.icon === this.icon;
+    return widget.tag === this.tag && widget.icon === this.icon;
   }
 }
 
-export const calloutDecoration = (char: string, color: string) =>
+export const calloutDecoration = (tag: string, color: string) =>
   Decoration.line({
     attributes: {
       class: 'lc-list-callout',
       style: `--lc-callout-color: ${color}`,
-      'data-callout': char,
+      'data-callout': tag,
     },
   });
 
@@ -117,10 +117,15 @@ export function buildCalloutDecos(view: EditorView, state: EditorState) {
           lastEnd = to;
 
           if (callout) {
-            const labelPos = lineFrom + match[1].length;
+            // Find the position of the tag in the line
+            const tagMatch = text.match(new RegExp(`#${callout.tag}(?:\\s|$)`));
+            if (!tagMatch) return;
+            
+            const tagStart = lineFrom + text.indexOf(tagMatch[0]);
+            const tagEnd = tagStart + tagMatch[0].length;
 
             // Set the line class and callout color
-            builder.add(lineFrom, lineFrom, calloutDecoration(callout.char, callout.color));
+            builder.add(lineFrom, lineFrom, calloutDecoration(callout.tag, callout.color));
 
             // Add the callout background element
             builder.add(
@@ -129,12 +134,12 @@ export function buildCalloutDecos(view: EditorView, state: EditorState) {
               Decoration.widget({ widget: new CalloutBackground(), side: -1 })
             );
 
-            // Decorate the callout marker
+            // Decorate the callout marker (replace the tag with icon or styled tag)
             builder.add(
-              labelPos,
-              labelPos + callout.char.length,
+              tagStart,
+              tagEnd,
               Decoration.replace({
-                widget: new CalloutMarker(callout.char, callout.icon),
+                widget: new CalloutMarker(callout.tag, callout.icon),
               })
             );
           }

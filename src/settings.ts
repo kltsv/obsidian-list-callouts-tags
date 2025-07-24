@@ -14,10 +14,9 @@ import { iconList as icons } from './iconList';
 import ListCalloutsPlugin from './main';
 
 export interface Callout {
-  char: string;
+  tag: string;
   color: string;
   icon?: string;
-  custom?: boolean;
 }
 
 export interface CalloutConfig {
@@ -57,7 +56,7 @@ export function buildSettingCallout(root: HTMLElement, callout: Callout) {
             if (callout.icon) {
               setIcon(span, callout.icon);
             } else {
-              span.appendText(callout.char);
+              span.appendText(`#${callout.tag}`);
             }
           });
           mockListLine.createSpan({
@@ -218,13 +217,14 @@ export function buildSetting(
     buildSettingCallout(calloutContainer, callout);
 
     el.createDiv({ cls: 'lc-input-container' }, (inputContainer) => {
-      // Character input
+      // Tag input
       new TextComponent(inputContainer)
-        .setValue(callout.char)
+        .setValue(callout.tag)
+        .setPlaceholder('important')
         .onChange((value) => {
           if (!value) return;
 
-          plugin.settings[index].char = value;
+          plugin.settings[index].tag = value;
           plugin.saveSettings();
 
           buildSettingCallout(calloutContainer, plugin.settings[index]);
@@ -261,35 +261,31 @@ export function buildSetting(
         });
       });
 
-      // Color selection.
-      if (callout.custom) {
-        const [r, g, b] = callout.color
-          .split(',')
-          .map((v) => parseInt(v.trim(), 10));
+      // Color selection - теперь доступна для всех тегов
+      const [r, g, b] = callout.color
+        .split(',')
+        .map((v) => parseInt(v.trim(), 10));
 
-        const color = new ColorComponent(inputContainer)
-          .setValueRgb({ r, g, b })
-          .onChange((_value) => {
-            const { r, g, b } = color.getValueRgb();
-            plugin.settings[index].color = `${r}, ${g}, ${b}`;
+      const color = new ColorComponent(inputContainer)
+        .setValueRgb({ r, g, b })
+        .onChange((_value) => {
+          const { r, g, b } = color.getValueRgb();
+          plugin.settings[index].color = `${r}, ${g}, ${b}`;
 
-            plugin.saveSettings();
-            buildSettingCallout(calloutContainer, plugin.settings[index]);
-          });
-      }
-
-      // Delete button.
-      if (callout.custom) {
-        const rightAlign = inputContainer.createDiv({
-          cls: 'lc-input-right-align',
+          plugin.saveSettings();
+          buildSettingCallout(calloutContainer, plugin.settings[index]);
         });
-        new ButtonComponent(rightAlign)
-          .setButtonText('Delete')
-          .setWarning()
-          .onClick((_e) => {
-            onDelete(index);
-          });
-      }
+
+      // Delete button - теперь доступна для всех тегов
+      const rightAlign = inputContainer.createDiv({
+        cls: 'lc-input-right-align',
+      });
+      new ButtonComponent(rightAlign)
+        .setButtonText('Delete')
+        .setWarning()
+        .onClick((_e) => {
+          onDelete(index);
+        });
     });
   });
 }
@@ -300,10 +296,9 @@ function buildNewCalloutSetting(
   onSubmit: (callout: Callout) => void
 ) {
   const callout: Callout = {
-    char: '',
+    tag: '',
     color: '158, 158, 158',
     icon: null,
-    custom: true,
   };
 
   containerEl.createDiv({ cls: 'lc-setting' }, (settingContainer) => {
@@ -311,7 +306,7 @@ function buildNewCalloutSetting(
       e.setText('Create a new Callout')
     );
     settingContainer.createDiv({ cls: 'setting-item-description' }, (e) =>
-      e.setText('Create additional list callout styles.')
+      e.setText('Create additional list callout styles based on tags.')
     );
 
     // Preview.
@@ -319,16 +314,16 @@ function buildNewCalloutSetting(
       cls: 'lc-callout-container',
     });
 
-    // Callout character.
+    // Callout tag.
     const inputContainer = settingContainer.createDiv({
       cls: 'lc-input-container',
     });
 
-    const char = new TextComponent(inputContainer)
+    const tag = new TextComponent(inputContainer)
       .setValue('')
-      .setPlaceholder('...')
+      .setPlaceholder('mytag')
       .onChange((value) => {
-        callout.char = value;
+        callout.tag = value;
         redraw();
       });
 
@@ -368,11 +363,11 @@ function buildNewCalloutSetting(
     function redraw() {
       buildSettingCallout(calloutContainer, callout);
 
-      const hasNoCharacter = callout.char.length === 0;
-      const hasConflictingCharacter =
-        plugin.settings.find((c) => c.char === char.getValue()) !== undefined;
+      const hasNoTag = callout.tag.length === 0;
+      const hasConflictingTag =
+        plugin.settings.find((c) => c.tag === tag.getValue()) !== undefined;
 
-      submit.setDisabled(hasNoCharacter || hasConflictingCharacter);
+      submit.setDisabled(hasNoTag || hasConflictingTag);
     }
 
     redraw();
@@ -400,7 +395,7 @@ export class ListCalloutSettings extends PluginSettingTab {
         f.append(createEl('br'));
         f.append(
           createEl('strong', {
-            text: 'Note: Using +, *, -, >, or # as the callout character can disrupt reading mode.',
+            text: 'Note: Callouts will highlight list items containing any of the specified tags. All tags can be deleted, including the default ones.',
           })
         );
       })

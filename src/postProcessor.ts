@@ -35,6 +35,65 @@ function getFirstTextNode(li: HTMLElement) {
   return null;
 }
 
+function findAndProcessTags(li: HTMLElement, config: CalloutConfig) {
+  // Find all text nodes in the list item
+  const walker = document.createTreeWalker(
+    li,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
+
+  let textNode;
+  while (textNode = walker.nextNode()) {
+    const text = textNode.textContent;
+    if (!text) continue;
+
+    const match = text.match(config.re);
+    if (match) {
+      const callout = config.callouts[match[1]];
+      if (callout) {
+        // Apply callout styling to the list item
+        li.addClass('lc-list-callout');
+        li.setAttribute('data-callout', callout.tag);
+        li.style.setProperty('--lc-callout-color', callout.color);
+
+        // Replace the tag with styled marker
+        const tagStart = match.index!;
+        const tagEnd = tagStart + match[0].length;
+        
+        const beforeText = text.slice(0, tagStart);
+        const afterText = text.slice(tagEnd);
+
+        const fragment = createFragment((f) => {
+          if (beforeText) {
+            f.appendText(beforeText);
+          }
+          f.append(
+            createSpan(
+              {
+                cls: 'lc-list-marker',
+                text: `#${callout.tag}`,
+              },
+              (span) => {
+                if (callout.icon) {
+                  setIcon(span, callout.icon);
+                }
+              }
+            )
+          );
+          if (afterText) {
+            f.appendText(afterText);
+          }
+        });
+
+        textNode.replaceWith(fragment);
+        break; // Only process the first tag found
+      }
+    }
+  }
+}
+
 function wrapLiContent(li: HTMLElement) {
   const toReplace: ChildNode[] = [];
   let insertBefore = null;
@@ -82,39 +141,10 @@ export function buildPostProcessor(
     }
 
     el.findAll('li').forEach((li) => {
-      const node = getFirstTextNode(li);
-      if (!node) return;
-
-      const text = node.textContent;
-      if (!text) return;
-
-      const match = text.match(config.re);
-      const callout = match ? config.callouts[match[1]] : null;
-
-      if (callout) {
-        li.addClass('lc-list-callout');
-        li.setAttribute('data-callout', callout.char);
-        li.style.setProperty('--lc-callout-color', callout.color);
-
-        node.replaceWith(
-          createFragment((f) => {
-            f.append(
-              createSpan(
-                {
-                  cls: 'lc-list-marker',
-                  text: text.slice(0, callout.char.length),
-                },
-                (span) => {
-                  if (callout.icon) {
-                    setIcon(span, callout.icon);
-                  }
-                }
-              )
-            );
-            f.append(text.slice(callout.char.length));
-          })
-        );
-
+      findAndProcessTags(li, config);
+      
+      // If we found a callout, wrap the content
+      if (li.hasClass('lc-list-callout')) {
         wrapLiContent(li);
       }
     });

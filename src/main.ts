@@ -14,31 +14,31 @@ import {
 const DEFAULT_SETTINGS: ListCalloutsSettings = [
   {
     color: '255, 214, 0',
-    char: '&',
+    tag: 'important',
   },
   {
     color: '255, 145, 0',
-    char: '?',
+    tag: 'question',
   },
   {
     color: '255, 23, 68',
-    char: '!',
+    tag: 'urgent',
   },
   {
     color: '124, 77, 255',
-    char: '~',
+    tag: 'note',
   },
   {
     color: '0, 184, 212',
-    char: '@',
+    tag: 'info',
   },
   {
     color: '0, 200, 83',
-    char: '$',
+    tag: 'success',
   },
   {
     color: '158, 158, 158',
-    char: '%',
+    tag: 'todo',
   },
 ];
 
@@ -87,13 +87,13 @@ export default class ListCalloutsPlugin extends Plugin {
   buildEditorConfig(): CalloutConfig {
     return {
       callouts: this.settings.reduce<Record<string, Callout>>((record, curr) => {
-        record[curr.char] = curr;
+        record[curr.tag] = curr;
         return record
       }, {}),
       re: new RegExp(
-        `(^\\s*[-*+](?: \\[.\\])? |^\\s*\\d+[\\.\\)](?: \\[.\\])? )(${
-          this.settings.map(callout => escapeStringRegexp(callout.char)).join('|')
-        }) `
+        `(^\\s*[-*+](?: \\[.\\])? |^\\s*\\d+[\\.\\)](?: \\[.\\])? ).*?#(${
+          this.settings.map(callout => escapeStringRegexp(callout.tag)).join('|')
+        })(?:\\s|$)`
       ),
     }
   }
@@ -101,33 +101,22 @@ export default class ListCalloutsPlugin extends Plugin {
   buildPostProcessorConfig() {
     this.postProcessorConfig = {
       callouts: this.settings.reduce<Record<string, Callout>>((record, curr) => {
-        record[curr.char] = curr;
+        record[curr.tag] = curr;
         return record
       }, {}),
       re: new RegExp(
-        `^(${
-          this.settings.map(callout => escapeStringRegexp(callout.char)).join('|')
-        }) `
+        `#(${
+          this.settings.map(callout => escapeStringRegexp(callout.tag)).join('|')
+        })(?:\\s|$)`
       ),
     }
   }
 
   async loadSettings() {
     const loadedSettings = (await this.loadData()) as Callout[];
-    const customCallouts = loadedSettings?.filter(
-      (callout) => callout.custom === true
-    );
-    const modifiedBuiltins = loadedSettings?.filter(
-      (callout) => callout.custom !== true
-    );
-
-    this.settings = DEFAULT_SETTINGS.map((s, i) => {
-      return Object.assign({}, s, modifiedBuiltins ? modifiedBuiltins[i] : {});
-    });
-
-    if (customCallouts) {
-      this.settings.push(...customCallouts);
-    }
+    
+    // Если есть сохраненные настройки, используем их, иначе используем дефолтные
+    this.settings = loadedSettings && loadedSettings.length > 0 ? loadedSettings : DEFAULT_SETTINGS;
   }
 
   async saveSettings() {
